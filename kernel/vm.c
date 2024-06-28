@@ -449,3 +449,34 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
     return -1;
   }
 }
+
+void
+vmpagetablewalk(pagetable_t pagetable, int level)
+{
+  pte_t pte;
+
+  // there are 2^9 = 512 PTEs in a page table.
+  for(int i = 0; i < 512; i++){
+    pte = pagetable[i];
+
+    if (!(pte & PTE_V))
+      continue;
+    
+    for(int j = 2 - level; j >= 0; j--)
+      printf(" ..");
+
+    printf("%d: pte %p pa %p\n",\
+            i, pte, PTE2PA(pte));
+    
+    if (level > 0)
+      vmpagetablewalk((pagetable_t)PTE2PA(pte), level - 1);
+  }  
+}
+
+// Prints the first process's page table
+void 
+vmprint(pagetable_t pagetable)
+{
+  printf("page table %p\n", pagetable);
+  vmpagetablewalk(pagetable, 2);
+}
