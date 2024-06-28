@@ -116,3 +116,21 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+// System call that reports dirty pages (modified pages) using PTE_D.
+int
+sys_pgdirty(void)
+{
+  int n;
+  uint64 addr;
+  struct proc* p;
+
+  argaddr(0, &addr);
+  p = myproc();
+
+  n = pgdirty(p->pagetable, p->sz);
+  if(copyout(p->pagetable, addr, (char*)&n, sizeof(n)) < 0)
+    return -1; 
+
+  return 0;
+}

@@ -518,3 +518,20 @@ pgaccess(pagetable_t pagetable, uint64 va, int n)
   }
   return mask;
 }
+
+int
+pgdirty(pagetable_t pagetable, int sz)
+{
+  int n;
+  uint64 va;
+  pte_t *pte;
+
+  n = 0; va = 0;
+  while(va < sz){
+    pte = walk(pagetable, va, 0);
+    if (*pte & PTE_D)
+      n++;
+    va += PGSIZE;
+  }
+  return n;
+}
