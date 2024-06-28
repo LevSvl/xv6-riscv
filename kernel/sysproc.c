@@ -75,6 +75,22 @@ int
 sys_pgaccess(void)
 {
   // lab pgtbl: your code here.
+  int n;
+  uint64 va;
+  uint32 mask;
+  uint64 dstaddr;
+  struct proc *p;
+
+  p = mycpu()->proc;
+
+  argaddr(0, &va);
+  argint(1, &n);
+  argaddr(2, &dstaddr);
+  
+  mask = pgaccess(p->pagetable, va, n);
+
+  copyout(p->pagetable, dstaddr, (char*)&mask, sizeof(mask));
+  
   return 0;
 }
 #endif

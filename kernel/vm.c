@@ -480,3 +480,41 @@ vmprint(pagetable_t pagetable)
   printf("page table %p\n", pagetable);
   vmpagetablewalk(pagetable, 2);
 }
+
+uint32
+pgaccess(pagetable_t pagetable, uint64 va, int n)
+{
+  pte_t *pte;
+  uint64 va0, last;
+  uint32 mask;
+
+  if (va > MAXVA || n > sizeof(mask)*8)
+    return -1;
+
+  mask = 0U;
+  va0 = PGROUNDUP(va);
+  last = va0 + PGSIZE * (n-1);
+
+  for(;;){
+    pagetable_t pagetable0 = pagetable;
+    for(int level = 2; level > 0 ; level--){
+      pte = &pagetable0[PX(level, last)];
+      pagetable0 = (pagetable_t)PTE2PA(*pte);
+    }
+
+    pte = &pagetable0[PX(0, last)];
+
+    if(*pte & PTE_A){
+      mask |= 1;
+      *pte &= ~PTE_A;
+    }
+
+    mask <<= 1;
+    
+    if(va0 == last)
+      return mask;
+    
+    last -= PGSIZE;
+  }
+  return mask;
+}
