@@ -4,18 +4,15 @@ ENTRY( _main )
 
 SECTIONS
 {
- . = 0x1000;
- 
   .text : {
     *(.text .text.*)
   }
 
-  .rodata : {
+  .rodata 0x200000 : {
     . = ALIGN(16);
     *(.srodata .srodata.*) /* do not need to distinguish this from .rodata */
     . = ALIGN(16);
     *(.rodata .rodata.*)
-    . = ALIGN(0x1000);
   }
 
   .data : {
