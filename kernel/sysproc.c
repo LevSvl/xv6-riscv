@@ -92,3 +92,41 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+uint64
+sys_sigalarm()
+{
+  struct proc *p;
+  int i;
+  uint64 handler;
+
+  p = myproc();
+  
+  argint(0, &i);
+  argaddr(1, &handler);
+
+  // set handler function address
+  // set current ticks as last time
+  p->aticks = i;
+  p->ahandler = handler;
+  p->atickslast = sys_uptime();
+
+  return 0;
+}
+
+uint64
+sys_sigreturn()
+{
+  struct proc *p;
+
+  p = myproc();
+
+  // restore user trapframe
+  *p->trapframe = *p->atrapframe; 
+
+  // set executing flag off
+  p->alocked = 0;
+  
+  // restore a0 by returning it 
+  return p->trapframe->a0;
+}

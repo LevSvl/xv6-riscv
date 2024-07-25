@@ -92,6 +92,13 @@ struct proc {
   int xstate;                  // Exit status to be returned to parent's wait
   int pid;                     // Process ID
 
+  // fields for process's alarm 
+  int aticks;                   // Alarm ticks
+  int atickslast;               // Alarm ticks passed
+  uint64 ahandler;              // Alarm handler
+  uint alocked;                 // Alarm execution flagg
+  struct trapframe *atrapframe; // data page for alarm
+
   // wait_lock must be held when using this:
   struct proc *parent;         // Parent process
 
