@@ -17,6 +17,11 @@ void            bwrite(struct buf*);
 void            bpin(struct buf*);
 void            bunpin(struct buf*);
 
+// backtrace.c
+void            backtrace();
+int             btracelookup(uint64, char*);
+void            btracecache();
+
 // console.c
 void            consoleinit(void);
 void            consoleintr(int);
@@ -140,7 +145,6 @@ void            argaddr(int, uint64 *);
 int             fetchstr(uint64, char*, int);
 int             fetchaddr(uint64, uint64*);
 void            syscall();
-void            backtrace();
 
 // trap.c
 extern uint     ticks;

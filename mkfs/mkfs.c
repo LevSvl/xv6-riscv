@@ -132,9 +132,13 @@ main(int argc, char *argv[])
     char *shortname;
     if(strncmp(argv[i], "user/", 5) == 0)
       shortname = argv[i] + 5;
+    // get rid of kernal elf for debug
+    else if(strncmp(argv[i], "kernel/tracekernel", 18) == 0)
+      shortname = argv[i] + 7;
     else
       shortname = argv[i];
     
+    printf("%s\n", shortname);
     assert(index(shortname, '/') == 0);
 
     if((fd = open(argv[i], 0)) < 0)

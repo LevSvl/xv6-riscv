@@ -30,7 +30,8 @@ OBJS = \
   $K/sysfile.o \
   $K/kernelvec.o \
   $K/plic.o \
-  $K/virtio_disk.o
+  $K/virtio_disk.o \
+	$K/backtrace.o
 
 OBJS_KCSAN = \
   $K/start.o \
@@ -85,6 +86,7 @@ AS = $(TOOLPREFIX)gas
 LD = $(TOOLPREFIX)ld
 OBJCOPY = $(TOOLPREFIX)objcopy
 OBJDUMP = $(TOOLPREFIX)objdump
+STRIP = $(TOOLPREFIX)strip
 
 CFLAGS = -Wall -Werror -O -fno-omit-frame-pointer -ggdb -gdwarf-2
 
@@ -123,11 +125,13 @@ $K/kernel: $(OBJS) $(OBJS_KCSAN) $K/kernel.ld $U/initcode
 	$(LD) $(LDFLAGS) -T $K/kernel.ld -o $K/kernel $(OBJS) $(OBJS_KCSAN)
 	$(OBJDUMP) -S $K/kernel > $K/kernel.asm
 	$(OBJDUMP) -t $K/kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $K/kernel.sym
+	cp $K/kernel $K/tracekernel
+	$(STRIP) --only-keep-debug $K/tracekernel
 
 $(OBJS): EXTRAFLAG := $(KCSANFLAG)
 
 $K/%.o: $K/%.c
-	$(CC) $(CFLAGS) $(EXTRAFLAG) -c -o $@ $<
+	$(CC) $(CFLAGS) $(EXTRAFLAG) -c -g -o $@ $<
 
 
 $U/initcode: $U/initcode.S
@@ -263,14 +267,14 @@ endif
 
 
 fs.img: mkfs/mkfs README $(UEXTRA) $(UPROGS)
-	mkfs/mkfs fs.img README $(UEXTRA) $(UPROGS)
+	mkfs/mkfs fs.img README $K/tracekernel $(UEXTRA) $(UPROGS)
 
 -include kernel/*.d user/*.d
 
 clean:
 	rm -f *.tex *.dvi *.idx *.aux *.log *.ind *.ilg *.dSYM *.zip \
 	*/*.o */*.d */*.asm */*.sym \
-	$U/initcode $U/initcode.out $K/kernel $U/usys.S \
+	$U/initcode $U/initcode.out $K/kernel $U/usys.S $K/tracekernel \
 	mkfs/mkfs fs.img .gdbinit \
 	$(UPROGS) \
 	ph barrier

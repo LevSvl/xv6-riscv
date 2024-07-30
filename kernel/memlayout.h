@@ -62,3 +62,6 @@
 //   TRAPFRAME (p->trapframe, used by the trampoline)
 //   TRAMPOLINE (the same page as in the kernel)
 #define TRAPFRAME (TRAMPOLINE - PGSIZE)
+// BACKTRACE contains mapping of kernel
+// functions and their addresses for backtrace
+#define BACKTRACE (PHYSTOP - 10*PGSIZE)
