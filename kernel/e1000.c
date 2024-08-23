@@ -95,13 +95,34 @@ e1000_init(uint32 *xregs)
 int
 e1000_transmit(struct mbuf *m)
 {
-  //
-  // Your code here.
-  //
-  // the mbuf contains an ethernet frame; program it into
-  // the TX descriptor ring so that the e1000 sends it. Stash
-  // a pointer so that it can be freed after sending.
-  //
+  acquire(&e1000_lock);
+
+  int i;
+
+  i = regs[E1000_TDT];
+  
+  // tx_ring is still processing by e1000
+  if(!(tx_ring[i].status & E1000_TXD_STAT_DD))
+    return -1;
+  
+  // clear old mbuf
+  if(tx_ring[i].addr)
+    mbuffree(tx_mbufs[i]);
+  
+  // save mbuf to transmit into ring
+  tx_mbufs[i] = m;
+  tx_ring[i].addr = (uint64)(m->head);
+  tx_ring[i].length = m->len;
+  tx_ring[i].status = 0;
+
+  // write cmd field
+  tx_ring[i].cmd |= E1000_TXD_CMD_RS;
+  if(!m->next)
+    tx_ring[i].cmd |= E1000_TXD_CMD_EOP;
+
+  regs[E1000_TDT] = (i + 1) % TX_RING_SIZE;
+
+  release(&e1000_lock);
   
   return 0;
 }
@@ -109,12 +130,49 @@ e1000_transmit(struct mbuf *m)
 static void
 e1000_recv(void)
 {
-  //
-  // Your code here.
-  //
-  // Check for packets that have arrived from the e1000
-  // Create and deliver an mbuf for each packet (using net_rx()).
-  //
+  acquire(&e1000_lock);
+
+  struct mbuf *mold, *mnew;
+  int i;
+
+  // increment tail-register to get written rx_desc
+  regs[E1000_RDT] = (regs[E1000_RDT] + 1) % RX_RING_SIZE;  
+  release(&e1000_lock);
+
+  i = regs[E1000_RDT];
+
+  // get all written by e1000 descriptors from ring 
+  while(rx_ring[i].status & E1000_RXD_STAT_DD){
+    acquire(&e1000_lock);
+
+    // save old buf for net_rx()
+    mold = rx_mbufs[i];
+    mold->len = rx_ring[i].length;
+
+    // make new mbuf to replace old in rx_desc
+    if((mnew = mbufalloc(0)) == 0)
+      return;
+    
+    // save new mbuf to ring
+    rx_ring[i].addr = (uint64)mnew->head;
+    rx_ring[i].status = 0;
+    rx_mbufs[i] = mnew;
+
+    release(&e1000_lock);
+
+    // send old to network stack
+    net_rx(mold);
+
+    // get new valid rx_desc
+    acquire(&e1000_lock);
+    regs[E1000_RDT] = (regs[E1000_RDT] + 1) % RX_RING_SIZE;  
+    i = regs[E1000_RDT];
+    release(&e1000_lock);
+  }
+
+  // decrement tail-register to make it equal
+  // the last valid rx_desc
+  regs[E1000_RDT] = i - 1;
 }
 
 void
