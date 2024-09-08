@@ -333,6 +333,32 @@ sys_open(void)
       end_op();
       return -1;
     }
+    if(ip->type == T_SYMLINK && !(omode & O_NOFOLLOW)){
+      int linkscnt = 1;
+      char linkedpath[MAXPATH];
+      do{
+        readi(ip,0,(uint64)linkedpath, 0, MAXPATH);
+        iunlockput(ip);
+        ip = namei(linkedpath);
+        if(ip == 0){
+          end_op();
+          return -1;
+        }
+        ilock(ip);
+      } while (ip->type == T_SYMLINK && (++linkscnt < SYMLINKMAXDEP));
+    
+      if(ip->type == T_SYMLINK){
+        iunlockput(ip);
+        end_op();
+        return -1;
+      }
+    
+    }
+  }
+
+  if(ip == 0){
+    end_op();
+    return -1;
   }
 
   if(ip->type == T_DEVICE && (ip->major < 0 || ip->major >= NDEV)){
@@ -502,4 +528,64 @@ sys_pipe(void)
     return -1;
   }
   return 0;
+}
+
+uint64
+sys_symlink(void)
+{
+  struct inode *ip, *dp, *lp;
+  char name[DIRSIZ], target[MAXPATH], linkpath[MAXPATH];
+  int targetlen;
+  
+  if(argstr(0, target, MAXPATH) < 0 || argstr(1, linkpath, MAXPATH) < 0)
+    return -1;
+  
+  begin_op();
+
+  ip = namei(target);
+  if(ip != 0){
+    ilock(ip);
+    ip->nlink++;
+    iupdate(ip);
+    iunlockput(ip);
+  }
+
+  lp = create(linkpath, T_SYMLINK, 0, 0);
+  if(lp == 0){
+    end_op();
+    return -1;
+  }
+
+  targetlen = strlen(target);
+
+  if((writei(lp, 0, (uint64)target, 0, targetlen)) != targetlen){
+    iunlockput(lp);
+    end_op();
+    return -1;
+  }
+  iupdate(lp);
+  iunlockput(lp);
+
+  if((dp = nameiparent(linkpath, name)) == 0)
+    goto bad;
+  ilock(dp);
+  if(dp->dev != lp->dev){
+    iunlockput(dp);
+    goto bad;
+  }
+  iunlockput(dp);
+
+  end_op();
+  
+  return 0;
+
+bad:
+  if(ip != 0){
+    ilock(ip);
+    ip->nlink--;
+    iupdate(ip);
+    iunlockput(ip);
+  }
+  end_op();
+  return -1;
 }

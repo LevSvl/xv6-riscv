@@ -31,6 +31,8 @@ struct superblock {
 
 #define ndindirect_mask(lvl, bn) ((bn >> (lvl*8)) & 0xFF)
 
+#define SYMLINKMAXDEP 10
+
 // On-disk inode structure
 struct dinode {
   short type;           // File type
