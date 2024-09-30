@@ -55,6 +55,11 @@ found:
   // can change thread_count concurently
   acquire(&pp->lock);
 
+  if(pp->thread_count >= NTHREAD){
+    release(&pp->lock);
+    return 0;
+  }
+  
   // hold tid_lock to make sure that
   // other threads wont have same tid
   acquire(&tid_lock);
