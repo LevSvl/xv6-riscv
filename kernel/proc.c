@@ -14,6 +14,7 @@ struct proc *initproc;
 
 int nextpid = 1;
 struct spinlock pid_lock;
+extern struct spinlock tid_lock;
 
 extern void forkret(void);
 void freeproc(struct proc *p);
@@ -50,6 +51,7 @@ procinit(void)
   struct proc *p;
   
   initlock(&pid_lock, "nextpid");
+  initlock(&tid_lock, "tid_lock");
   initlock(&wait_lock, "wait_lock");
   for(p = proc; p < &proc[NPROC]; p++) {
       initlock(&p->lock, "proc");
@@ -123,6 +125,8 @@ allocproc(void)
 
 found:
   p->pid = allocpid();
+  p->tid = 0;
+  p->thread_count = 1;
   p->state = USED;
 
   // Allocate a trapframe page.
@@ -158,9 +162,31 @@ freeproc(struct proc *p)
   if(p->trapframe)
     kfree((void*)p->trapframe);
   p->trapframe = 0;
-  if(p->pagetable)
-    proc_freepagetable(p->pagetable, p->sz);
-  p->pagetable = 0;
+
+  // hold tid_lock to make sure that 
+  // process has actual value of thread_count
+  // until it'll free shared pagetable
+  acquire(&tid_lock);
+
+  p->thread_count -= 1;
+  thread_cnt_update(p); // update thread_count broadcast
+  
+  if(p->pagetable){
+    if(p->tid > 0){
+      // if process is child thread, its TRAPFRAME page
+      // must be unmapped before calling proc_freepagetable()
+      uvmunmap(p->pagetable, TRAPFRAME + PGSIZE*p->tid, 1, 1);
+    }
+    if(!p->thread_count){
+      // fully clear pagetable only when other threads
+      // have been cleared pagetable from their trapframes
+      proc_freepagetable(p->pagetable, p->sz);
+      p->pagetable = 0;
+    }
+  }
+  release(&tid_lock);
+
+  p->tid = 0;
   p->sz = 0;
   p->pid = 0;
   p->parent = 0;
@@ -347,6 +373,7 @@ void
 exit(int status)
 {
   struct proc *p = myproc();
+  struct proc *pp;
 
   if(p == initproc)
     panic("init exiting");
@@ -372,8 +399,13 @@ exit(int status)
 
   // Parent might be sleeping in wait().
   wakeup(p->parent);
-  
+
   acquire(&p->lock);
+
+  // kill all threads of the process
+  for(pp = proc; pp < &proc[NPROC]; pp++)
+      if(pp->pid == p->pid && pp->tid != p->tid)
+        setkilled(pp); 
 
   p->xstate = status;
   p->state = ZOMBIE;

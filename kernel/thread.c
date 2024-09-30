@@ -6,10 +6,6 @@
 #include "proc.h"
 #include "defs.h"
 
-extern struct cpu cpus[NCPU];
-
-extern struct spinlock pid_lock;
-
 extern struct proc proc[NPROC];
 
 struct spinlock tid_lock;
@@ -19,6 +15,23 @@ extern void forkret(void);
 
 extern struct spinlock wait_lock;
 
+// Update p->thread_count and make
+// it equal to value of process pp.
+// tid_lock pp->lock must be held to 
+// avoid race between threads
+void
+thread_cnt_update(struct proc *pp)
+{
+  struct proc *t;
+
+  for(t = proc; t < &proc[NPROC]; t++){
+    if(t->pid == pp->pid && t->tid != pp->tid && t != pp){
+      acquire(&t->lock);
+      t->thread_count = pp->thread_count;
+      release(&t->lock);
+    }
+  }
+}
 
 static struct proc*
 allocthread(void)
@@ -38,11 +51,28 @@ allocthread(void)
 found:
   pp = myproc();
 
+  // hold pp->lock because other threads 
+  // can change thread_count concurently
   acquire(&pp->lock);
+
+  // hold tid_lock to make sure that
+  // other threads wont have same tid
+  acquire(&tid_lock);
+
   p->pid = pp->pid;
   p->tid = pp->tid + 1;
+  pp->thread_count += 1;
+  p->thread_count = pp->thread_count;
+
+  release(&tid_lock);
   release(&pp->lock);
 
+  // since pp->lock unlocked and new thread p has actual
+  // value of thread_count we can update it broadcast
+  acquire(&tid_lock);
+  thread_cnt_update(p);
+  release(&tid_lock);
+  
   p->state = USED;
 
   // Allocate a trapframe page.
@@ -59,6 +89,14 @@ found:
     release(&p->lock);
     return 0;
   }
+
+  // Set up new trapframe for thread
+  if(mappages(p->pagetable, TRAPFRAME + PGSIZE*p->tid, PGSIZE,
+                (uint64)(p->trapframe), PTE_R | PTE_W) < 0){
+      uvmunmap(p->pagetable, TRAPFRAME + PGSIZE*p->tid, 1, 0);
+      freeproc(p);
+      return 0;
+    }
 
   // Set up new context to start executing at forkret,
   // which returns to user space.
@@ -93,9 +131,13 @@ clone(uint64 fn, uint64 arg1, uint64 arg2, uint64 stack)
   np->trapframe->epc = fn;
 
   // Child has own stack
-  np->trapframe->sp = stack + PGSIZE; // initial stack pointer
-  uint64 *pte = walk(p->pagetable,(uint64)stack+PGSIZE, 0);
-  printf("pte: %p\n", pte);
+  np->trapframe->sp = stack + PGSIZE;
+
+  // increment reference counts on open file descriptors.
+  for(int i = 0; i < NOFILE; i++)
+    if(p->ofile[i])
+      np->ofile[i] = filedup(p->ofile[i]);
+  np->cwd = idup(p->cwd);
 
   safestrcpy(np->name, p->name, sizeof(p->name));
 

@@ -91,8 +91,8 @@ struct proc {
   int killed;                  // If non-zero, have been killed
   int xstate;                  // Exit status to be returned to parent's wait
   int pid;                     // Process ID
-  int tid;
-
+  int tid;                     // Thread ID
+  int thread_count;            // If non-zero, there is at least child 1 thread
   // wait_lock must be held when using this:
   struct proc *parent;         // Parent process
 
