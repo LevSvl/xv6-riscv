@@ -16,6 +16,12 @@ SECTIONS
     *(trampsec)
     . = ALIGN(0x1000);
     ASSERT(. - _trampoline == 0x1000, "error: trampoline larger than one page");
+
+    _dummy = .;
+    *(dummysec)
+    . = ALIGN(0x1000);
+    ASSERT(. - _dummy == 0x1000, "error: _dummy larger than one page");
+
     PROVIDE(etext = .);
   }
 

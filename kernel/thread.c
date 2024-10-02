@@ -15,6 +15,8 @@ extern void forkret(void);
 
 extern struct spinlock wait_lock;
 
+extern char dummy[];
+
 // Update p->thread_count and make
 // it equal to value of process pp.
 // tid_lock pp->lock must be held to 
@@ -135,8 +137,17 @@ clone(uint64 fn, uint64 arg1, uint64 arg2, uint64 stack)
   // Child start execution from it's own ra
   np->trapframe->epc = fn;
 
+  // Child return address must point to dummy
+  np->trapframe->ra = DUMMY;
+  
   // Child has own stack
   np->trapframe->sp = stack + PGSIZE;
+
+  // When child thread complete execution,
+  // it's epilogue code can restore incorrect 
+  // sp by loading s0 from stack, to avoid this
+  // initial s0 should contain the same stack 
+  np->trapframe->s0 = stack + PGSIZE;
 
   // increment reference counts on open file descriptors.
   for(int i = 0; i < NOFILE; i++)

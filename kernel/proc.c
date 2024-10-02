@@ -20,6 +20,7 @@ extern void forkret(void);
 void freeproc(struct proc *p);
 
 extern char trampoline[]; // trampoline.S
+extern char dummy[]; // dummy.S
 
 // helps ensure that wakeups of wait()ing
 // parents are not lost. helps obey the
@@ -228,6 +229,15 @@ proc_pagetable(struct proc *p)
     return 0;
   }
 
+  if(mappages(pagetable, DUMMY, PGSIZE,
+              (uint64)dummy, PTE_R | PTE_X | PTE_U) < 0){
+    uvmunmap(pagetable, TRAMPOLINE, 1, 0);
+    uvmunmap(pagetable, TRAPFRAME, 1, 0);
+    uvmfree(pagetable, 0);
+
+    return 0;
+  }
+
   return pagetable;
 }
 
@@ -237,6 +247,7 @@ void
 proc_freepagetable(pagetable_t pagetable, uint64 sz)
 {
   uvmunmap(pagetable, TRAMPOLINE, 1, 0);
+  uvmunmap(pagetable, DUMMY, 1, 0);
   uvmunmap(pagetable, TRAPFRAME, 1, 0);
   uvmfree(pagetable, sz);
 }

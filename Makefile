@@ -18,6 +18,7 @@ OBJS = \
 	$K/thread.o \
   $K/swtch.o \
   $K/trampoline.o \
+	$K/dummy.o \
   $K/trap.o \
   $K/syscall.o \
   $K/sysproc.o \
