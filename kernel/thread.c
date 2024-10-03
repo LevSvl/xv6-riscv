@@ -66,10 +66,13 @@ found:
   // other threads wont have same tid
   acquire(&tid_lock);
 
-  p->pid = pp->pid;
-  p->tid = pp->tid + 1;
-  pp->thread_count += 1;
-  p->thread_count = pp->thread_count;
+  p->pid = pp->pid; // child thread has same pid
+
+  // since thread_count initially equal 1,
+  // child's tid is the current value of 
+  // thread_count before incrementing it
+  p->tid = pp->thread_count;
+  p->thread_count = ++pp->thread_count;
 
   release(&tid_lock);
   release(&pp->lock);
