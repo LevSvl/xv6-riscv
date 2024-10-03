@@ -5,6 +5,7 @@ int fork(void);
 int clone(void(*fcn)(void*, void*), void *arg1, void *arg2, void *stack);
 int exit(int) __attribute__((noreturn));
 int wait(int*);
+int cancel(void **stack);
 int join(void **stack);
 int pipe(int*);
 int write(int, const void*, int);

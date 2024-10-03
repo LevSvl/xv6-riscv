@@ -173,7 +173,78 @@ clone(uint64 fn, uint64 arg1, uint64 arg2, uint64 stack)
 }
 
 int
+cancel(uint64 stack)
+{
+  struct proc *p = myproc();
+
+  // Close all open files.
+  for(int fd = 0; fd < NOFILE; fd++){
+    if(p->ofile[fd]){
+      struct file *f = p->ofile[fd];
+      fileclose(f);
+      p->ofile[fd] = 0;
+    }
+  }
+
+  begin_op();
+  iput(p->cwd);
+  end_op();
+  p->cwd = 0;
+
+  acquire(&wait_lock);
+
+  // Give any children to init.
+  reparent(p);
+
+  // Parent might be sleeping in join().
+  wakeup(p->parent);
+
+  acquire(&p->lock);
+
+  p->state = ZOMBIE;
+
+  release(&wait_lock);
+
+  // Jump into the scheduler, never to return.
+  sched();
+  panic("zombie cancel");
+}
+
+int
 join(uint64 stack)
 {
+  struct proc *pp;
+  int tid, found;
+  struct proc *p = myproc();
+
+  acquire(&wait_lock);
+
+  for(;;){
+    found = 0;
+    for(pp = proc; pp < &proc[NPROC]; pp++){
+      if(pp->trapframe && PGROUNDUP(pp->trapframe->sp) == stack + PGSIZE){
+        acquire(&pp->lock);
+
+        found = 1;
+        if(pp->state == ZOMBIE){
+          tid = pp->tid;
+          freeproc(pp);
+          release(&pp->lock);
+          release(&wait_lock);
+          return tid;
+        }
+
+        release(&pp->lock);
+      }
+    }
+
+    if(!found || killed(p)){
+      release(&wait_lock);
+      return -1;
+    }
+
+    sleep(p, &wait_lock);
+  }
+
   return 0;
 }

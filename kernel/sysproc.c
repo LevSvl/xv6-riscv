@@ -111,3 +111,11 @@ sys_join(void)
   argaddr(0, &stack);
   return join(stack);
 }
+
+uint64
+sys_cancel(void)
+{
+  uint64 stack;
+  argaddr(0, &stack);
+  return cancel(stack);
+}
