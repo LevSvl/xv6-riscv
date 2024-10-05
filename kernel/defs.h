@@ -110,7 +110,7 @@ void            reparent(struct proc*);
 
 // thread.c
 int             clone(uint64, uint64, uint64, uint64);
-int             join(uint64);
+int             join(uint64, uint64);
 void            thread_cnt_update(struct proc *);
 int             cancel(uint64);
 

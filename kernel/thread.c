@@ -214,7 +214,7 @@ cancel(uint64 stack)
 }
 
 int
-join(uint64 stack)
+join(uint64 stack, uint64 ret)
 {
   struct proc *pp;
   int tid, found;
@@ -231,6 +231,12 @@ join(uint64 stack)
         found = 1;
         if(pp->state == ZOMBIE){
           tid = pp->tid;
+          if(ret != 0 && copyout(p->pagetable, ret, (char*)&pp->trapframe->a0,
+                                sizeof(pp->trapframe->a0)) < 0){
+            release(&pp->lock);
+            release(&wait_lock);
+            return -1;
+          }
           freeproc(pp);
           release(&pp->lock);
           release(&wait_lock);

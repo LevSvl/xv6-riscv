@@ -108,8 +108,12 @@ uint64
 sys_join(void)
 {
   uint64 stack;
+  uint64 ret;
+
   argaddr(0, &stack);
-  return join(stack);
+  argaddr(1, &ret);
+
+  return join(stack, ret);
 }
 
 uint64
