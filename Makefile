@@ -190,6 +190,7 @@ UPROGS=\
 	$U/_grind\
 	$U/_wc\
 	$U/_zombie\
+	$U/_clonetest\
 
 
 
@@ -217,7 +218,8 @@ endif
 
 ifeq ($(LAB),thread)
 UPROGS += \
-	$U/_uthread
+	$U/_uthread \
+	$U/_matrixtest
 
 $U/uthread_switch.o : $U/uthread_switch.S
 	$(CC) $(CFLAGS) -c -o $U/uthread_switch.o $U/uthread_switch.S
@@ -225,6 +227,10 @@ $U/uthread_switch.o : $U/uthread_switch.S
 $U/_uthread: $U/uthread.o $U/uthread_switch.o $(ULIB)
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $U/_uthread $U/uthread.o $U/uthread_switch.o $(ULIB)
 	$(OBJDUMP) -S $U/_uthread > $U/uthread.asm
+
+$U/_matrixtest: $U/matrixtest.o $U/uthread_switch.o $(ULIB)
+	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $U/_matrixtest $U/matrixtest.o $U/uthread_switch.o $(ULIB)
+	$(OBJDUMP) -S $U/_matrixtest > $U/matrixtest.asm
 
 ph: notxv6/ph.c
 	gcc -o ph -g -O2 $(XCFLAGS) notxv6/ph.c -pthread
