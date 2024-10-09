@@ -176,7 +176,7 @@ freeproc(struct proc *p)
     if(p->tid > 0){
       // if process is child thread, its TRAPFRAME page
       // must be unmapped before calling proc_freepagetable()
-      uvmunmap(p->pagetable, TRAPFRAME + PGSIZE*p->tid, 1, 1);
+      uvmunmap(p->pagetable, TRAPFRAME + PGSIZE*p->tid, 1, 0);
     }
     if(!p->thread_count){
       // fully clear pagetable only when other threads
