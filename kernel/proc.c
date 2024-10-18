@@ -128,6 +128,7 @@ found:
   p->pid = allocpid();
   p->tid = 0;
   p->thread_count = 1;
+  p->trapframe_was_mapped = 0;
   p->state = USED;
 
   // Allocate a trapframe page.
@@ -173,7 +174,7 @@ freeproc(struct proc *p)
   thread_cnt_update(p); // update thread_count broadcast
   
   if(p->pagetable){
-    if(p->tid > 0){
+    if(p->tid > 0 && p->trapframe_was_mapped){
       // if process is child thread, its TRAPFRAME page
       // must be unmapped before calling proc_freepagetable()
       uvmunmap(p->pagetable, TRAPFRAME + PGSIZE*p->tid, 1, 0);
@@ -188,6 +189,7 @@ freeproc(struct proc *p)
   release(&tid_lock);
 
   p->tid = 0;
+  p->trapframe_was_mapped = 0;
   p->sz = 0;
   p->pid = 0;
   p->parent = 0;
@@ -228,6 +230,7 @@ proc_pagetable(struct proc *p)
     uvmfree(pagetable, 0);
     return 0;
   }
+  p->trapframe_was_mapped = 1;
 
   if(mappages(pagetable, DUMMY, PGSIZE,
               (uint64)dummy, PTE_R | PTE_X | PTE_U) < 0){

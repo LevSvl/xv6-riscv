@@ -93,6 +93,7 @@ struct proc {
   int pid;                     // Process ID
   int tid;                     // Thread ID
   int thread_count;            // If non-zero, there is at least child 1 thread
+  int trapframe_was_mapped;
   // wait_lock must be held when using this:
   struct proc *parent;         // Parent process
 

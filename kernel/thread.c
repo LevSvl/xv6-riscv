@@ -103,10 +103,10 @@ found:
   // Set up new trapframe for thread
   if(mappages(p->pagetable, TRAPFRAME + PGSIZE*p->tid, PGSIZE,
                 (uint64)(p->trapframe), PTE_R | PTE_W) < 0){
-      uvmunmap(p->pagetable, TRAPFRAME + PGSIZE*p->tid, 1, 0);
       freeproc(p);
       return 0;
     }
+  p->trapframe_was_mapped = 1;
 
   // Set up new context to start executing at forkret,
   // which returns to user space.
