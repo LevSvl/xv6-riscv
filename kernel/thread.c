@@ -8,7 +8,7 @@
 
 extern struct proc proc[NPROC];
 
-struct spinlock tid_lock;
+struct spinlock common_thread_lock;
 
 extern void freeproc(struct proc *p);
 extern void forkret(void);
@@ -64,7 +64,7 @@ found:
   
   // hold tid_lock to make sure that
   // other threads wont have same tid
-  acquire(&tid_lock);
+  acquire(&common_thread_lock);
 
   p->pid = pp->pid; // child thread has same pid
 
@@ -74,14 +74,14 @@ found:
   p->tid = pp->thread_count;
   p->thread_count = ++pp->thread_count;
 
-  release(&tid_lock);
+  release(&common_thread_lock);
   release(&pp->lock);
 
   // since pp->lock unlocked and new thread p has actual
   // value of thread_count we can update it broadcast
-  acquire(&tid_lock);
+  acquire(&common_thread_lock);
   thread_cnt_update(p);
-  release(&tid_lock);
+  release(&common_thread_lock);
   
   p->state = USED;
 

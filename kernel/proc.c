@@ -14,7 +14,7 @@ struct proc *initproc;
 
 int nextpid = 1;
 struct spinlock pid_lock;
-extern struct spinlock tid_lock;
+extern struct spinlock common_thread_lock;
 
 extern void forkret(void);
 void freeproc(struct proc *p);
@@ -52,7 +52,7 @@ procinit(void)
   struct proc *p;
   
   initlock(&pid_lock, "nextpid");
-  initlock(&tid_lock, "tid_lock");
+  initlock(&common_thread_lock, "common_thread_lock");
   initlock(&wait_lock, "wait_lock");
   for(p = proc; p < &proc[NPROC]; p++) {
       initlock(&p->lock, "proc");
@@ -165,10 +165,10 @@ freeproc(struct proc *p)
     kfree((void*)p->trapframe);
   p->trapframe = 0;
 
-  // hold tid_lock to make sure that 
+  // hold common_thread_lock to make sure that 
   // process has actual value of thread_count
   // until it'll free shared pagetable
-  acquire(&tid_lock);
+  acquire(&common_thread_lock);
 
   p->thread_count -= 1;
   thread_cnt_update(p); // update thread_count broadcast
@@ -186,7 +186,7 @@ freeproc(struct proc *p)
       p->pagetable = 0;
     }
   }
-  release(&tid_lock);
+  release(&common_thread_lock);
 
   p->tid = 0;
   p->trapframe_was_mapped = 0;
