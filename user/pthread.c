@@ -48,7 +48,22 @@ static int initial = 1;
 #define lock(s)   (pthread_mutex_lock(s))
 #define unlock(s) (pthread_mutex_unlock(s))
 
-// init allocated stacks once, 
+void
+pthread_init()
+{
+  lock(&stacks_lock);
+  initial = 0;
+  for(int i = 0; i < MAXIMUM_ACTIVE_THREADS; i++){
+    __stack_t *s = &stacks_desc[i];
+    s->is_used = 0;
+    s->stackbase = (uint64)&all_stacks_mem[i * DEFAULT_STACK_SIZE];
+    init(&s->s_lock);
+  }
+
+  __sync_synchronize();
+  unlock(&stacks_lock);
+}
+
 // get free stack from all_thread_stacks 
 uint64
 __alloc_thread_stack()
@@ -56,27 +71,7 @@ __alloc_thread_stack()
   __stack_t *s;
   uint64 dst_stack_addr;
   int i;
-
-  /* initial code */
-  if(initial){
-    lock(&stacks_lock);
-    initial = 0;
-    
-    for(i = 0; i < MAXIMUM_ACTIVE_THREADS; i++){
-      s = &stacks_desc[i];
-      s->is_used = 0;
-      s->stackbase = (uint64)&all_stacks_mem[i * DEFAULT_STACK_SIZE];
-      init(&s->s_lock);
-    }
-
-    __sync_synchronize();
-    unlock(&stacks_lock);
-  }
-  
-
-  /* regular code */
   int found = 0;
-
   for(i = 0; i < MAXIMUM_ACTIVE_THREADS; i++){
     s = &stacks_desc[i];
     
@@ -152,7 +147,11 @@ int
 pthread_create(pthread_t *thread_stack, void *(*start_routine)(void *, void *),\
                   void *arg1, void *arg2)
 {
-  // allocate memory for stack
+  // initialize stacks once
+  if(initial)
+    pthread_init();
+
+  // get allocated memory for stack
   *thread_stack = (pthread_t)__alloc_thread_stack();
   if(thread_stack == 0)
     return -1;
