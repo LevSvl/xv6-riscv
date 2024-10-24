@@ -58,8 +58,8 @@ found:
   acquire(&pp->lock);
 
   if(pp->thread_count > NTHREAD){
-    release(&p->lock);
     release(&pp->lock);
+    release(&p->lock);
     return 0;
   }
   
