@@ -23,7 +23,7 @@
 /* Thread manipulations */
 
 #define DEFAULT_STACK_SIZE  4096
-#define MAXIMUM_ACTIVE_THREADS 12*4
+#define MAXIMUM_ACTIVE_THREADS 4
 #define ALL_MEM_FOR_STACKS  (DEFAULT_STACK_SIZE*MAXIMUM_ACTIVE_THREADS)
 
 typedef pthread_mutex_t __stacks_lock_t;
@@ -37,7 +37,7 @@ typedef struct __stack{
 #define STACK_ALIGNED __attribute__((aligned(DEFAULT_STACK_SIZE)))
 static uint8 STACK_ALIGNED all_stacks_mem[ALL_MEM_FOR_STACKS];
 
-static uint8 __current_threads_system_cnt = 0;
+static uint8 __current_proc_threads_cnt = 0;
 
 static __stack_t stacks_desc[MAXIMUM_ACTIVE_THREADS];
 __stacks_lock_t stacks_lock = {0}; // stacks_lock->flag = 0
@@ -92,7 +92,7 @@ __alloc_thread_stack()
 
   lock(&stacks_lock);
 
-  if(__current_threads_system_cnt == MAXIMUM_ACTIVE_THREADS){
+  if(__current_proc_threads_cnt - 1 == MAXIMUM_ACTIVE_THREADS){
     unlock(&stacks_lock);
 
     lock(&stacks_desc[i].s_lock);
@@ -101,7 +101,7 @@ __alloc_thread_stack()
     
     return 0;
   }
-  __current_threads_system_cnt++;
+  __current_proc_threads_cnt++;
 
   unlock(&stacks_lock);
 
@@ -132,12 +132,12 @@ __dealloc_thread_stack(uint64 stack_addr)
 
   lock(&stacks_lock);
 
-  if(__current_threads_system_cnt == 0){
+  if(__current_proc_threads_cnt == 0){
     unlock(&stacks_lock);
     return -1;
   }
 
-  __current_threads_system_cnt -= 1;
+  __current_proc_threads_cnt -= 1;
   unlock(&stacks_lock);
 
   return 0;

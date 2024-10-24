@@ -8,6 +8,13 @@
 
 extern struct proc proc[NPROC];
 
+
+// if 20 % of all processes call clone,
+// it will be the maximum system threads number
+#define MAX_SYSTEM_THREADS  ((NPROC/5)*NTHREAD)
+
+uint8 current_system_threads_cnt = 0;
+
 struct spinlock common_thread_lock;
 
 extern void freeproc(struct proc *p);
@@ -66,6 +73,17 @@ found:
   // hold tid_lock to make sure that
   // other threads wont have same tid
   acquire(&common_thread_lock);
+
+  // check if there is no system space for new thread 
+  if(current_system_threads_cnt > MAX_SYSTEM_THREADS){
+    release(&pp->lock);
+    release(&common_thread_lock);
+    release(&p->lock);
+    return 0;
+  }
+
+  current_system_threads_cnt++;
+
 
   p->pid = pp->pid; // child thread has same pid
 

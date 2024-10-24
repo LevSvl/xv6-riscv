@@ -14,6 +14,8 @@ struct proc *initproc;
 
 int nextpid = 1;
 struct spinlock pid_lock;
+
+extern uint8 current_system_threads_cnt;
 extern struct spinlock common_thread_lock;
 
 extern void forkret(void);
@@ -170,7 +172,13 @@ freeproc(struct proc *p)
   // until it'll free shared pagetable
   acquire(&common_thread_lock);
 
+  if(p->thread_count > 1 && current_system_threads_cnt == 0)
+    panic("freeing zero system thread");
+
   p->thread_count -= 1;
+
+  current_system_threads_cnt--;
+
   thread_cnt_update(p); // update thread_count broadcast
   
   if(p->pagetable){
