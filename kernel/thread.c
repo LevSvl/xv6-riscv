@@ -57,7 +57,8 @@ found:
   // can change thread_count concurently
   acquire(&pp->lock);
 
-  if(pp->thread_count >= NTHREAD){
+  if(pp->thread_count > NTHREAD){
+    release(&p->lock);
     release(&pp->lock);
     return 0;
   }
@@ -104,6 +105,7 @@ found:
   if(mappages(p->pagetable, TRAPFRAME + PGSIZE*p->tid, PGSIZE,
                 (uint64)(p->trapframe), PTE_R | PTE_W) < 0){
       freeproc(p);
+      release(&p->lock);
       return 0;
     }
   p->trapframe_was_mapped = 1;
