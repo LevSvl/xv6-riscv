@@ -60,6 +60,7 @@
 //   expandable heap
 //   ...
 //   TRAPFRAME (p->trapframe, used by the trampoline)
+//   DUMMY  (here thread waits for cancel)
 //   TRAMPOLINE (the same page as in the kernel)
 #define TRAPFRAME (DUMMY - (NTHREAD + 1)*PGSIZE)
 
