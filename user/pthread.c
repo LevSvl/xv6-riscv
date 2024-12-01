@@ -48,7 +48,7 @@ static int initial = 1;
 #define lock(s)   (pthread_mutex_lock(s))
 #define unlock(s) (pthread_mutex_unlock(s))
 
-void
+static void
 pthread_init()
 {
   lock(&stacks_lock);
@@ -65,7 +65,7 @@ pthread_init()
 }
 
 // get free stack from all_thread_stacks 
-uint64
+static uint64
 __alloc_thread_stack()
 {
   __stack_t *s;
@@ -108,7 +108,7 @@ __alloc_thread_stack()
   return dst_stack_addr;
 }
 
-int
+static int
 __dealloc_thread_stack(uint64 stack_addr)
 {
   __stack_t *s;
