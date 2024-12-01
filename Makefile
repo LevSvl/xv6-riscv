@@ -194,6 +194,8 @@ UPROGS=\
 	$U/_wc\
 	$U/_zombie\
 	$U/_clonetest\
+	$U/_tlibtest\
+	$U/_allocstackstest\
 
 
 
