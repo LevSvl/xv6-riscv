@@ -44,13 +44,19 @@ sys_wait(void)
 uint64
 sys_futex_wait(void)
 {
-  return 0;
+  uint64 p;
+  int v;
+  argaddr(0, &p);
+  argint(1, &v);
+  return futex_wait(p, v);
 }
 
 uint64
 sys_futex_wake(void)
 {
-  return 0;
+  uint64 p;
+  argaddr(0, &p);
+  return futex_wake(p);
 }
 
 uint64

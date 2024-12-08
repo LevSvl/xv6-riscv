@@ -113,6 +113,8 @@ int             clone(uint64, uint64, uint64, uint64);
 int             join(uint64, uint64);
 void            thread_cnt_update(struct proc *);
 int             cancel(uint64);
+int             futex_wait(uint64, int);
+int             futex_wake(uint64);
 
 // swtch.S
 void            swtch(struct context*, struct context*);
