@@ -9,6 +9,8 @@
 extern struct proc proc[NPROC];
 
 struct spinlock common_thread_lock;
+struct spinlock futex_lock;
+
 
 extern void freeproc(struct proc *p);
 extern void forkret(void);
@@ -256,6 +258,49 @@ join(uint64 stack, uint64 ret)
 
     sleep(p, &wait_lock);
   }
+
+  return 0;
+}
+
+int
+futex_wait(uint64 addr, int expected)
+{
+  int futex_val;
+  uint64 futex_pa;
+  struct proc *p = myproc(); 
+  
+  futex_pa = walkaddr(p->pagetable, addr);
+  if(futex_pa == 0)
+    return -1;
+
+  acquire(&futex_lock);
+  
+  for(;;){
+    if((copyin(p->pagetable, (char*)&futex_val,
+                  addr, sizeof(futex_val)) < 0)){
+      release(&futex_lock);
+      return -1;
+    }
+    if(futex_val != expected){
+      release(&futex_lock);
+      return 0;
+    }
+    sleep((void *)futex_pa, &futex_lock);
+  }
+}
+
+int
+futex_wake(uint64 addr)
+{
+  uint64 futex_pa;
+  struct proc *p = myproc();
+
+  futex_pa = walkaddr(p->pagetable, addr);
+  if(futex_pa == 0)
+    return -1;
+  acquire(&futex_lock);
+  wakeup((void *)futex_pa);
+  release(&futex_lock);
 
   return 0;
 }
