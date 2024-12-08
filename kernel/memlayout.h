@@ -66,7 +66,3 @@
 #define TRAPFRAME (USYSCALL - (NTHREAD + 1)*PGSIZE)
 #define USYSCALL (DUMMY - PGSIZE)
 #define DUMMY (TRAMPOLINE - PGSIZE)
-
-struct usyscall {
-  int pid;  // Process ID
-};

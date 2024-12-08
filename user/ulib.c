@@ -151,6 +151,6 @@ memcpy(void *dst, const void *src, uint n)
 int 
 ugetpid(void)
 {
-  struct usyscall *u = (struct usyscall *)USYSCALL;
+  usyscall_t *u = (usyscall_t *)USYSCALL;
   return u->pid;
 }

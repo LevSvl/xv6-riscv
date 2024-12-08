@@ -257,7 +257,7 @@ proc_pagetable(struct proc *p)
     return 0;
   }
 
-  struct usyscall *npusyscall = (struct usyscall *)pa;
+  usyscall_t *npusyscall = (usyscall_t *)pa;
   npusyscall->pid = p->pid;
 
   return pagetable;
