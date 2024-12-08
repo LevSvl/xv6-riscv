@@ -42,6 +42,18 @@ sys_wait(void)
 }
 
 uint64
+sys_futex_wait(void)
+{
+  return 0;
+}
+
+uint64
+sys_futex_wake(void)
+{
+  return 0;
+}
+
+uint64
 sys_sbrk(void)
 {
   uint64 addr;

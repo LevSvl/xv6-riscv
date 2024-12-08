@@ -26,6 +26,8 @@ int gettid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+int futex_wait(int *, int);
+int futex_wake(int *);
 
 // ulib.c
 int stat(const char*, struct stat*);
