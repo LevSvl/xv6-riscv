@@ -24,3 +24,5 @@
 #define SYS_join   23
 #define SYS_cancel 24
 #define SYS_gettid 25
+#define SYS_futex_wait 26
+#define SYS_futex_wake 27

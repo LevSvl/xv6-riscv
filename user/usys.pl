@@ -40,3 +40,5 @@ entry("clone");
 entry("join");
 entry("cancel");
 entry("gettid");
+entry("futex_wait");
+entry("futex_wake");
