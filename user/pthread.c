@@ -186,17 +186,51 @@ pthread_mutex_init(pthread_mutex_t *mutex)
   mutex->locked = 0;
 }
 
+
+int 
+atomic_bit_test_and_set(int *addr, int pos)
+{
+  int old = (*addr) & (1 << pos);
+  *addr = old | (1 << pos);
+  __atomic_xor_fetch(addr, 0, 0);
+  return old;
+}
+
+#define atomic_increment(ptr)  __sync_fetch_and_add(ptr, 1)
+#define atomic_decrement(ptr)  __sync_fetch_and_sub(ptr, 1)
+
+#define atomic_bit_test_and_set(ptr, pos) \ 
+        (((__sync_fetch_and_or(ptr, (1 << pos))) >> pos) & 0x1)
+
+#define atomic_add_zero(ptr, val) \                              
+        (__sync_add_and_fetch(ptr, val) == 0)
+
 void
 pthread_mutex_lock(pthread_mutex_t *mutex)
 {
-  while(__sync_lock_test_and_set(&mutex->locked, 1) == 1)
-    ;
-  __sync_synchronize();
+  int v;
+
+  if(atomic_bit_test_and_set(&mutex->locked, 31) == 0)
+    return;
+  atomic_increment(&mutex->locked);
+  for(;;){
+    if(atomic_bit_test_and_set(&mutex->locked, 31) == 0){
+      atomic_decrement(&mutex->locked);
+      return;
+    }
+
+    v = mutex->locked;
+
+    if(v >= 0)
+      continue;
+    futex_wait(&mutex->locked, v);
+  }
 }
 
 void
 pthread_mutex_unlock(pthread_mutex_t *mutex)
 {
-  __sync_lock_release(&mutex->locked);
-  __sync_synchronize();
+  if(atomic_add_zero(&mutex->locked, -1U))
+    return;
+  futex_wake(&mutex->locked);
 }
