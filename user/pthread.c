@@ -230,7 +230,7 @@ pthread_mutex_lock(pthread_mutex_t *mutex)
 void
 pthread_mutex_unlock(pthread_mutex_t *mutex)
 {
-  if(atomic_add_zero(&mutex->locked, -1U))
+  if(atomic_add_zero(&mutex->locked, 0x80000000))
     return;
   futex_wake(&mutex->locked);
 }
