@@ -39,3 +39,4 @@ entry("uptime");
 entry("clone");
 entry("join");
 entry("cancel");
+entry("gettid");
