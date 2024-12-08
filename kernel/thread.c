@@ -266,12 +266,7 @@ int
 futex_wait(uint64 addr, int expected)
 {
   int futex_val;
-  uint64 futex_pa;
   struct proc *p = myproc(); 
-  
-  futex_pa = walkaddr(p->pagetable, addr);
-  if(futex_pa == 0)
-    return -1;
 
   acquire(&futex_lock);
   
@@ -285,22 +280,16 @@ futex_wait(uint64 addr, int expected)
       release(&futex_lock);
       return 0;
     }
-    sleep((void *)futex_pa, &futex_lock);
+    sleep((void *)addr, &futex_lock);
   }
 }
 
 int
 futex_wake(uint64 addr)
 {
-  uint64 futex_pa;
-  struct proc *p = myproc();
-
-  futex_pa = walkaddr(p->pagetable, addr);
-  if(futex_pa == 0)
-    return -1;
   acquire(&futex_lock);
-  wakeup((void *)futex_pa);
+  wakeup((void *)addr);
   release(&futex_lock);
-
+  
   return 0;
 }
