@@ -199,10 +199,10 @@ atomic_bit_test_and_set(int *addr, int pos)
 #define atomic_increment(ptr)  __sync_fetch_and_add(ptr, 1)
 #define atomic_decrement(ptr)  __sync_fetch_and_sub(ptr, 1)
 
-#define atomic_bit_test_and_set(ptr, pos) \ 
+#define atomic_bit_test_and_set(ptr, pos) \
         (((__sync_fetch_and_or(ptr, (1 << pos))) >> pos) & 0x1)
 
-#define atomic_add_zero(ptr, val) \                              
+#define atomic_add_zero(ptr, val) \
         (__sync_add_and_fetch(ptr, val) == 0)
 
 void
