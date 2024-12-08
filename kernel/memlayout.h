@@ -61,7 +61,8 @@
 //   ...
 //   TRAPFRAME (p->trapframe, used by the trampoline)
 //   DUMMY  (here thread waits for cancel)
+//   USYSCALL (speeding up syscalls)
 //   TRAMPOLINE (the same page as in the kernel)
-#define TRAPFRAME (DUMMY - (NTHREAD + 1)*PGSIZE)
-
+#define TRAPFRAME (USYSCALL - (NTHREAD + 1)*PGSIZE)
+#define USYSCALL (DUMMY - PGSIZE)
 #define DUMMY (TRAMPOLINE - PGSIZE)
