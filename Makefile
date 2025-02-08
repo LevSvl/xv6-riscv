@@ -192,8 +192,8 @@ UPROGS=\
 	$U/_zombie\
 	$U/_clonetest\
 	$U/_ftest\
-  $U/_pingpong
-
+  $U/_pingpong\
+	$U/_primes
 
 
 
