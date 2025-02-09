@@ -201,7 +201,7 @@ thread_c(void)
 int
 main(int argc, char const *argv[])
 {
-  int tmstart1, tmstart3, tmstart3k;
+  int tmstart1, tmstart3, tmstart3k, tmstart3p;
 
   init_matrix(A);
   init_matrix(B);
@@ -268,12 +268,31 @@ main(int argc, char const *argv[])
 
   printf("3 kernel-threads mean time: %d\n", uptime() - tmstart3k);
 
+  /*  3 separate processes  */
+  tmstart3p = uptime();
 
-  printf("blockingcalltest is OK\n");
+  int p1 = fork();
+  if (p1 == 0) {
+    kthread_a();
+    exit(0);
+  }
 
-  // there is no wrapper-function _main
-  // for blockingcalltest so main must
-  // use exit() insted of return
+  int p2 = fork();
+  if (p2 == 0) {
+    kthread_b();
+    exit(0);
+  }
+
+  int p3 = fork();
+  if (p3 == 0) {
+    kthread_c();
+    exit(0);
+  }
+
+  wait((int *)0);
+
+  printf("3 separate processes mean time: %d\n", uptime() - tmstart3p);
+
   exit(0);
 }
 
