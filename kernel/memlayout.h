@@ -66,7 +66,12 @@
 #define TRAPFRAME (USYSCALL - (NTHREAD + 1)*PGSIZE)
 #define USYSCALL (DUMMY - PGSIZE)
 #define DUMMY (TRAMPOLINE - PGSIZE)
+// User text start address
+#define USERBASE  (0x00001000L)
 
+#ifndef __ASSEMBLER__
 struct usyscall {
   int pid;  // Process ID
 };
+#endif // __ASSEMBLER__
+

@@ -139,6 +139,14 @@ found:
     return 0;
   }
 
+  // Allocate a usyscall page
+  if((p->usyscall = (struct usyscall *)kalloc()) == 0){
+    freeproc(p);
+    release(&p->lock);
+    return 0;
+  }
+  p->usyscall->pid = p->pid;
+
   // An empty user page table.
   p->pagetable = proc_pagetable(p);
   if(p->pagetable == 0){
@@ -165,6 +173,10 @@ freeproc(struct proc *p)
   if(p->trapframe)
     kfree((void*)p->trapframe);
   p->trapframe = 0;
+
+  if(p->usyscall)
+    kfree((void *)p->usyscall);
+  p->usyscall = 0;
 
   // hold common_thread_lock to make sure that 
   // process has actual value of thread_count
@@ -246,9 +258,8 @@ proc_pagetable(struct proc *p)
     return 0;
   }
 
-  char *pa = (char *)kalloc();
   if(mappages(pagetable, USYSCALL, PGSIZE,
-            (uint64)pa, PTE_R | PTE_U) < 0){
+            (uint64)p->usyscall, PTE_R | PTE_U) < 0){
     uvmunmap(pagetable, TRAMPOLINE, 1, 0);
     uvmunmap(pagetable, TRAPFRAME, 1, 0);
     uvmunmap(pagetable, DUMMY, 1, 0);
@@ -256,9 +267,6 @@ proc_pagetable(struct proc *p)
   
     return 0;
   }
-
-  struct usyscall *npusyscall = (struct usyscall *)pa;
-  npusyscall->pid = p->pid;
 
   return pagetable;
 }
@@ -284,8 +292,7 @@ uchar initcode[] = {
   0x93, 0x08, 0x70, 0x00, 0x73, 0x00, 0x00, 0x00,
   0x93, 0x08, 0x20, 0x00, 0x73, 0x00, 0x00, 0x00,
   0xef, 0xf0, 0x9f, 0xff, 0x2f, 0x69, 0x6e, 0x69,
-  0x74, 0x00, 0x00, 0x24, 0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00
+  0x74, 0x00, 0x00, 0x24, 0x10, 0x00, 0x00, 0x00,
 };
 
 // Set up first user process.
@@ -300,11 +307,11 @@ userinit(void)
   // allocate one user page and copy initcode's instructions
   // and data into it.
   uvmfirst(p->pagetable, initcode, sizeof(initcode));
-  p->sz = PGSIZE;
+  p->sz = 2*PGSIZE;
 
   // prepare for the very first "return" from kernel to user.
-  p->trapframe->epc = 0;      // user program counter
-  p->trapframe->sp = PGSIZE;  // user stack pointer
+  p->trapframe->epc = USERBASE; // user program counter
+  p->trapframe->sp = USERBASE + PGSIZE;  // user stack pointer
 
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");
