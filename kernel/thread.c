@@ -111,7 +111,7 @@ found:
     }
 
   // Set up new trapframe for thread
-  if(mappages(p->pagetable, TRAPFRAME + PGSIZE*p->tid, PGSIZE,
+  if(mappages(p->pagetable, TRAPFRAME_VADDR(TRAPFRAME, p->tid), PGSIZE,
                 (uint64)(p->trapframe), PTE_R | PTE_W) < 0){
       freeproc(p);
       release(&p->lock);
