@@ -194,6 +194,7 @@ freeproc(struct proc *p)
     if(p->tid > 0 && p->trapframe_was_mapped){
       // if process is child thread, its TRAPFRAME page
       // must be unmapped before calling proc_freepagetable()
+      uvmunmap(p->pagetable, TRAMPOLINE_VADDR(TRAMPOLINE, p->tid), 1, 0);
       uvmunmap(p->pagetable, TRAPFRAME + PGSIZE*p->tid, 1, 0);
     }
     if(!p->thread_count){

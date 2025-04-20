@@ -15,6 +15,7 @@ extern void forkret(void);
 
 extern struct spinlock wait_lock;
 
+extern char trampoline0[]; // trampoline.S
 extern char dummy[];
 
 // Update p->thread_count and make
@@ -100,6 +101,14 @@ found:
     release(&p->lock);
     return 0;
   }
+
+  // Set up new trampoline for thread
+  if(mappages(p->pagetable, TRAMPOLINE_VADDR(TRAMPOLINE, p->tid), PGSIZE,
+    (uint64)(TRAMPOLINE_PADDR(trampoline0, p->tid)), PTE_R | PTE_X) < 0){
+    freeproc(p);
+    release(&p->lock);
+    return 0;
+    }
 
   // Set up new trapframe for thread
   if(mappages(p->pagetable, TRAPFRAME + PGSIZE*p->tid, PGSIZE,

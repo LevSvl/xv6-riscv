@@ -69,10 +69,10 @@
 //   TRAPFRAME (p->trapframe, used by the trampoline)
 //   DUMMY  (here thread waits for cancel)
 //   USYSCALL (speeding up syscalls)
-//   TRAMPOLINE (the same page as in the kernel)
+//   TRAMPOLINE[NTHREAD] (the same pages as in the kernel)
 #define TRAPFRAME (USYSCALL - (NTHREAD + 1)*PGSIZE)
 #define USYSCALL (DUMMY - PGSIZE)
-#define DUMMY (TRAMPOLINE - PGSIZE)
+#define DUMMY (TRAMPOLINE - NTHREAD*PGSIZE)
 // User text start address
 #define USERBASE  (0x00001000L)
 
