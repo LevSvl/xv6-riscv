@@ -9,8 +9,8 @@
 #define CYCLES 1 // number of repeats matrices multiplication
 
 // matrices sizes
-#define N 12
-#define M 500000
+#define N 21
+#define M 9000
 
 int A[N][M], B[N][M] , C[N][M], D[N][M]; //E[N][M]; // matrices for test
 int tmsleep = 1; // time that thread sleeps after each row of matrix

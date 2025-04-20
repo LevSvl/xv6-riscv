@@ -229,7 +229,7 @@ $U/_uthread: $U/uthread.o $U/uthread_switch.o $(ULIB)
 	$(OBJDUMP) -S $U/_uthread > $U/uthread.asm
 
 $U/_matrixtest: $U/matrixtest.o $U/uthread_switch.o $(ULIB)
-	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $U/_matrixtest $U/matrixtest.o $U/uthread_switch.o $(ULIB)
+	$(LD) $(LDFLAGS) -N -e main -Ttext 0x1000 -o $U/_matrixtest $U/matrixtest.o $U/uthread_switch.o $(ULIB)
 	$(OBJDUMP) -S $U/_matrixtest > $U/matrixtest.asm
 
 ph: notxv6/ph.c
