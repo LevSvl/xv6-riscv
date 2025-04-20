@@ -20,7 +20,7 @@ extern struct spinlock common_thread_lock;
 extern void forkret(void);
 void freeproc(struct proc *p);
 
-extern char trampoline[]; // trampoline.S
+extern char trampoline0[]; // trampoline.S
 extern char dummy[]; // dummy.S
 
 // helps ensure that wakeups of wait()ing
@@ -194,7 +194,8 @@ freeproc(struct proc *p)
     if(p->tid > 0 && p->trapframe_was_mapped){
       // if process is child thread, its TRAPFRAME page
       // must be unmapped before calling proc_freepagetable()
-      uvmunmap(p->pagetable, TRAPFRAME + PGSIZE*p->tid, 1, 0);
+      uvmunmap(p->pagetable, TRAMPOLINE_VADDR(TRAMPOLINE, p->tid), 1, 0);
+      uvmunmap(p->pagetable, TRAPFRAME_VADDR(TRAPFRAME, p->tid), 1, 0);
     }
     if(!p->thread_count){
       // fully clear pagetable only when other threads
@@ -233,17 +234,17 @@ proc_pagetable(struct proc *p)
   // at the highest user virtual address.
   // only the supervisor uses it, on the way
   // to/from user space, so not PTE_U.
-  if(mappages(pagetable, TRAMPOLINE, PGSIZE,
-              (uint64)trampoline, PTE_R | PTE_X) < 0){
+  if(mappages(pagetable, TRAMPOLINE_VADDR(TRAMPOLINE, 0), PGSIZE,
+              (uint64)TRAMPOLINE_PADDR(trampoline0, 0), PTE_R | PTE_X) < 0){
     uvmfree(pagetable, 0);
     return 0;
   }
 
   // map the trapframe page just below the trampoline page, for
   // trampoline.S.
-  if(mappages(pagetable, TRAPFRAME, PGSIZE,
+  if(mappages(pagetable, TRAPFRAME_VADDR(TRAPFRAME, 0), PGSIZE,
               (uint64)(p->trapframe), PTE_R | PTE_W) < 0){
-    uvmunmap(pagetable, TRAMPOLINE, 1, 0);
+    uvmunmap(pagetable, TRAMPOLINE_VADDR(TRAMPOLINE, 0), 1, 0);
     uvmfree(pagetable, 0);
     return 0;
   }
@@ -251,8 +252,8 @@ proc_pagetable(struct proc *p)
 
   if(mappages(pagetable, DUMMY, PGSIZE,
               (uint64)dummy, PTE_R | PTE_X | PTE_U) < 0){
-    uvmunmap(pagetable, TRAMPOLINE, 1, 0);
-    uvmunmap(pagetable, TRAPFRAME, 1, 0);
+    uvmunmap(pagetable, TRAMPOLINE_VADDR(TRAMPOLINE, 0), 1, 0);
+    uvmunmap(pagetable, TRAPFRAME_VADDR(TRAPFRAME, 0), 1, 0);
     uvmfree(pagetable, 0);
 
     return 0;
@@ -260,8 +261,8 @@ proc_pagetable(struct proc *p)
 
   if(mappages(pagetable, USYSCALL, PGSIZE,
             (uint64)p->usyscall, PTE_R | PTE_U) < 0){
-    uvmunmap(pagetable, TRAMPOLINE, 1, 0);
-    uvmunmap(pagetable, TRAPFRAME, 1, 0);
+    uvmunmap(pagetable, TRAMPOLINE_VADDR(TRAMPOLINE, 0), 1, 0);
+    uvmunmap(pagetable, TRAPFRAME_VADDR(TRAPFRAME, 0), 1, 0);
     uvmunmap(pagetable, DUMMY, 1, 0);
     uvmfree(pagetable, 0);
   
@@ -276,10 +277,10 @@ proc_pagetable(struct proc *p)
 void
 proc_freepagetable(pagetable_t pagetable, uint64 sz)
 {
-  uvmunmap(pagetable, TRAMPOLINE, 1, 0);
-  uvmunmap(pagetable, USYSCALL, 1, 0);
+  uvmunmap(pagetable, TRAMPOLINE_VADDR(TRAMPOLINE, 0), 1, 0);
+  uvmunmap(pagetable, TRAPFRAME_VADDR(TRAPFRAME, 0), 1, 0);
   uvmunmap(pagetable, DUMMY, 1, 0);
-  uvmunmap(pagetable, TRAPFRAME, 1, 0);
+  uvmunmap(pagetable, USYSCALL, 1, 0);
   uvmfree(pagetable, sz);
 }
 

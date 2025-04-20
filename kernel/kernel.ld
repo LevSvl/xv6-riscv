@@ -12,10 +12,30 @@ SECTIONS
   .text : {
     *(.text .text.*)
     . = ALIGN(0x1000);
-    _trampoline = .;
-    *(trampsec)
+
+    _trampoline0 = .;
+    *(trampsec0)
     . = ALIGN(0x1000);
-    ASSERT(. - _trampoline == 0x1000, "error: trampoline larger than one page");
+    ASSERT(. - _trampoline0 == 0x1000, "error: trampoline0 larger than 1 page");
+
+
+    _trampoline1 = .;
+    *(trampsec1)
+    . = ALIGN(0x1000);
+    ASSERT(. - _trampoline1 == 0x1000, "error: trampoline1 larger than 1 page");
+
+
+    _trampoline2 = .;
+    *(trampsec2)
+    . = ALIGN(0x1000);
+    ASSERT(. - _trampoline2 == 0x1000, "error: trampoline2 larger than 1 page");
+
+
+    _trampoline3 = .;
+    *(trampsec3)
+    . = ALIGN(0x1000);
+    ASSERT(. - _trampoline3 == 0x1000, "error: trampoline3 larger than 1 page");
+
 
     _dummy = .;
     *(dummysec)

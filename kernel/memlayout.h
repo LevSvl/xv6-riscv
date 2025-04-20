@@ -47,10 +47,17 @@
 // map the trampoline page to the highest address,
 // in both user and kernel space.
 #define TRAMPOLINE (MAXVA - PGSIZE)
+// these are macros necessary to calculate the thread private areas for traps
+#define TRAMPOLINE_SIZE                         (PGSIZE)
+#define TRAMPOLINE_VADDR_OFFSET(base, tid)      (base - TRAMPOLINE_SIZE*tid)
+#define TRAMPOLINE_PADDR_OFFSET(base, tid)      (base + TRAMPOLINE_SIZE*tid)
+#define TRAMPOLINE_VADDR(base, tid)             (TRAMPOLINE_VADDR_OFFSET(base, tid))
+#define TRAMPOLINE_PADDR(base, tid)             (TRAMPOLINE_PADDR_OFFSET(base, tid))
+
 
 // map kernel stacks beneath the trampoline,
 // each surrounded by invalid guard pages.
-#define KSTACK(p) (TRAPFRAME - ((p)+1)* 2*PGSIZE)
+#define KSTACK(p) (USYSCALL - ((p)+1)* 2*PGSIZE)
 
 // User memory layout.
 // Address zero first:
@@ -59,13 +66,18 @@
 //   fixed-size stack
 //   expandable heap
 //   ...
-//   TRAPFRAME (p->trapframe, used by the trampoline)
-//   DUMMY  (here thread waits for cancel)
 //   USYSCALL (speeding up syscalls)
-//   TRAMPOLINE (the same page as in the kernel)
-#define TRAPFRAME (USYSCALL - (NTHREAD + 1)*PGSIZE)
-#define USYSCALL (DUMMY - PGSIZE)
-#define DUMMY (TRAMPOLINE - PGSIZE)
+//   DUMMY  (here thread waits for cancel)
+//   TRAPFRAME[NTHREAD] (p->trapframe, used by the trampoline)
+//   TRAMPOLINE[NTHREAD] (the same pages as in the kernel)
+#define TRAPFRAME  (TRAMPOLINE - (NTHREAD + 1)*PGSIZE)
+// these are macros necessary to calculate the thread private areas for traps
+#define TRAPFRAME_SIZE                         (PGSIZE)
+#define TRAPFRAME_VADDR_OFFSET(base, tid)      (base - TRAPFRAME_SIZE*tid)
+#define TRAPFRAME_VADDR(base, tid)             (TRAPFRAME_VADDR_OFFSET(base, tid))
+
+#define DUMMY     (TRAPFRAME - (NTHREAD + 1)*PGSIZE)
+#define USYSCALL  (DUMMY - PGSIZE)
 // User text start address
 #define USERBASE  (0x00001000L)
 
