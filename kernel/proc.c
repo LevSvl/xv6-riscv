@@ -20,7 +20,7 @@ extern struct spinlock common_thread_lock;
 extern void forkret(void);
 void freeproc(struct proc *p);
 
-extern char trampoline[]; // trampoline.S
+extern char trampoline0[]; // trampoline.S
 extern char dummy[]; // dummy.S
 
 // helps ensure that wakeups of wait()ing
@@ -234,7 +234,7 @@ proc_pagetable(struct proc *p)
   // only the supervisor uses it, on the way
   // to/from user space, so not PTE_U.
   if(mappages(pagetable, TRAMPOLINE, PGSIZE,
-              (uint64)trampoline, PTE_R | PTE_X) < 0){
+              (uint64)trampoline0, PTE_R | PTE_X) < 0){
     uvmfree(pagetable, 0);
     return 0;
   }

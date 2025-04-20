@@ -13,13 +13,12 @@
 #include "riscv.h"
 #include "memlayout.h"
 
-.section trampsec
-.globl trampoline
-.globl usertrap
-trampoline:
+.section trampsec2
+.globl trampoline2
+trampoline2:
 .align 4
-.globl uservec
-uservec:    
+.globl uservec2
+uservec2:    
 	#
         # trap.c sets stvec to point here, so
         # traps from user space start here,
@@ -34,12 +33,8 @@ uservec:
         # each process has a separate p->trapframe memory area,
         # but it's mapped to the same virtual address
         # (TRAPFRAME) in every process's user page table.
+        li a0, TRAPFRAME + 2*PGSIZE
         
-        li a0, TRAPFRAME
-        li t0, PGSIZE
-        mul t0, tp, t0 
-        add a0, a0, t0 
-
         # save the user registers in TRAPFRAME
         sd ra, 40(a0)
         sd sp, 48(a0)
@@ -85,6 +80,7 @@ uservec:
         # load the address of usertrap(), from p->trapframe->kernel_trap
         ld t0, 16(a0)
 
+
         # fetch the kernel page table address, from p->trapframe->kernel_satp.
         ld t1, 0(a0)
 
@@ -101,8 +97,8 @@ uservec:
         # jump to usertrap(), which does not return
         jr t0
 
-.globl userret
-userret:
+.globl userret2
+userret2:
         # userret(pagetable)
         # called by usertrapret() in trap.c to
         # switch from kernel to user.
@@ -112,17 +108,14 @@ userret:
         sfence.vma zero, zero
         csrw satp, a0
         sfence.vma zero, zero
-        
-        li a0, TRAPFRAME
-        li t0, PGSIZE
-        mul t0, tp, t0 
-        add a0, a0, t0 
+
+        li a0, TRAPFRAME + 2*PGSIZE
 
         # restore all but a0 from TRAPFRAME
         ld ra, 40(a0)
         ld sp, 48(a0)
         ld gp, 56(a0)
-        # ld tp, 64(a0)
+        ld tp, 64(a0)
         ld t0, 72(a0)
         ld t1, 80(a0)
         ld t2, 88(a0)
