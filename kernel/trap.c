@@ -97,7 +97,7 @@ usertrapret(void)
   intr_off();
 
   // send syscalls, interrupts, and exceptions to uservec in trampoline.S
-  uint64 trampoline_uservec = TRAMPOLINE + (uservec0 - trampoline0);
+  uint64 trampoline_uservec = TRAMPOLINE_VADDR(TRAMPOLINE, p->tid) + (uservec0 - trampoline0);
   w_stvec(trampoline_uservec);
 
   // set up trapframe values that uservec will need when
@@ -127,7 +127,7 @@ usertrapret(void)
   // jump to userret in trampoline.S at the top of memory, which 
   // switches to the user page table, restores user registers,
   // and switches to user mode with sret.
-  uint64 trampoline_userret = TRAMPOLINE + (userret0 - trampoline0);
+  uint64 trampoline_userret = TRAMPOLINE_VADDR(TRAMPOLINE, p->tid) + (userret0 - trampoline0);
   ((void (*)(uint64))trampoline_userret)(satp);
 }
 

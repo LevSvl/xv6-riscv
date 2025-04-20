@@ -47,6 +47,13 @@
 // map the trampoline page to the highest address,
 // in both user and kernel space.
 #define TRAMPOLINE (MAXVA - PGSIZE)
+// these are macros necessary to calculate the thread private areas for traps
+#define TRAMPOLINE_SIZE                         (PGSIZE)
+#define TRAMPOLINE_VADDR_OFFSET(base, tid)      (base - TRAMPOLINE_SIZE*tid)
+#define TRAMPOLINE_PADDR_OFFSET(base, tid)      (base + TRAMPOLINE_SIZE*tid)
+#define TRAMPOLINE_VADDR(base, tid)             (TRAMPOLINE_VADDR_OFFSET(base, tid))
+#define TRAMPOLINE_PADDR(base, tid)             (TRAMPOLINE_PADDR_OFFSET(base, tid))
+
 
 // map kernel stacks beneath the trampoline,
 // each surrounded by invalid guard pages.
