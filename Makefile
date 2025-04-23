@@ -144,7 +144,7 @@ $U/initcode: $U/initcode.S
 tags: $(OBJS) _init
 	etags *.S *.c
 
-ULIB = $U/ulib.o $U/usys.o $U/printf.o $U/umalloc.o $U/pthread.o
+ULIB = $U/ulib.o $U/usys.o $U/printf.o $U/umalloc.o $U/pthread.o 	$U/testslib.o
 
 ifeq ($(LAB),$(filter $(LAB), lock))
 ULIB += $U/statistics.o
@@ -196,6 +196,7 @@ UPROGS=\
 	$U/_clonetest\
 	$U/_tlibtest\
 	$U/_allocstackstest\
+	$U/_tests\
 
 
 
