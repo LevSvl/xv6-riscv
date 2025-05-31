@@ -6,12 +6,20 @@
 
 #define N 10
 pthread_mutex_t mutex;
+int need_sync;
 
 void *foo()
 {
-  pthread_mutex_lock(&mutex);
-  printf("%d: work\n", gettid());
-  pthread_mutex_unlock(&mutex);
+  
+  if (need_sync) {
+    pthread_mutex_lock(&mutex);
+  }
+  printf("thread %d: running\n", gettid());
+
+  if (need_sync) {
+    pthread_mutex_unlock(&mutex);
+  }
+
 
   return 0;
 }
@@ -20,8 +28,10 @@ int main(int argc, char const *argv[])
 {
   pthread_t p[N];
   int rc;
+  need_sync = (argc > 1) ? (argv[1][0] != '0') : 0;
 
   pthread_mutex_init(&mutex);
+
   for(int i = 0; i < N; i++){
     rc = pthread_create(&p[i], foo, 0, 0);
     if(rc == 0)
